@@ -8,7 +8,7 @@ from pathlib import Path
 # Add the project root to the Python path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
@@ -69,7 +69,10 @@ def health():
 @app.post("/filter")
 def filter_endpoint(req: FilterRequest):
     df = get_data()
-    filtered = filter_dataset(df, disease=req.disease, year=req.year, demographics=req.demographics)
+    try:
+        filtered = filter_dataset(df, disease=req.disease, year=req.year, demographics=req.demographics)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     agg = aggregate_by_state(filtered, disease=req.disease)
     agg = apply_rule_of_11(agg)
     return agg.to_dict(orient="records")
@@ -78,7 +81,10 @@ def filter_endpoint(req: FilterRequest):
 def mine_patterns_endpoint(req: MiningRequest):
     df = get_data()
     disease_normalized = normalize_disease_name(req.disease)
-    filtered = filter_dataset(df, disease=disease_normalized, year=req.year, demographics=req.demographics)
+    try:
+        filtered = filter_dataset(df, disease=disease_normalized, year=req.year, demographics=req.demographics)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     # The make_transactions function now handles the Rule of 11 internally
     tx = make_transactions(filtered, disease=disease_normalized)
@@ -94,7 +100,10 @@ def mine_patterns_endpoint(req: MiningRequest):
 def qa_endpoint(req: QARequest):
     df = get_data()
     disease_normalized = normalize_disease_name(req.disease)
-    filtered = filter_dataset(df, disease=disease_normalized, year=req.year, demographics=req.demographics)
+    try:
+        filtered = filter_dataset(df, disease=disease_normalized, year=req.year, demographics=req.demographics)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     # Aggregate and apply Rule of 11 before answering
     agg = aggregate_by_state(filtered, disease=disease_normalized)

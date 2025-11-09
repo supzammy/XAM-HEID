@@ -67,9 +67,42 @@ def filter_dataset(df: pd.DataFrame, disease: Optional[str]=None, year: Optional
     out = df.copy()
     if year is not None:
         out = out[out['year'] == int(year)]
+
+    # Mapping from possible frontend/display demographic keys to the canonical dataframe columns
+    display_to_col = {
+        'age': 'age_group',
+        'agegroup': 'age_group',
+        'age group': 'age_group',
+        'race': 'race_ethnicity',
+        'race_ethnicity': 'race_ethnicity',
+        'race ethnicity': 'race_ethnicity',
+        'income': 'income_group',
+        'income level': 'income_group',
+        'income_group': 'income_group',
+    }
+
     if demographics:
-        for k,v in demographics.items():
+        for k, v in demographics.items():
             if v is None:
                 continue
-            out = out[out[k] == v]
+
+            # normalize key (allow frontend display labels like 'Race' or 'Income Level')
+            key_norm = str(k).strip().lower()
+            col = None
+            if key_norm in display_to_col:
+                col = display_to_col[key_norm]
+            elif k in out.columns:
+                col = k
+            else:
+                # try case-insensitive column match
+                matches = [c for c in out.columns if c.lower() == key_norm]
+                if matches:
+                    col = matches[0]
+
+            if col is None:
+                allowed = list(display_to_col.keys()) + list(out.columns)
+                raise ValueError(f"Unknown demographic filter key '{k}'. Allowed keys (examples): {allowed}")
+
+            out = out[out[col] == v]
+
     return out
