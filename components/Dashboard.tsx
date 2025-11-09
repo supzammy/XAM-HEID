@@ -4,6 +4,8 @@ import MapChart from './MapChart';
 import AIPolicyAdvisor from './AIPolicyAdvisor';
 import BarChart from './BarChart';
 import StateDetailView from './StateDetailView';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface DashboardProps {
   data: StateData[];
@@ -51,6 +53,59 @@ const Dashboard: React.FC<DashboardProps> = ({ data, fullDataset, filters, stats
   const [selectedStateCode, setSelectedStateCode] = useState<string | null>(null);
   const [topNCount, setTopNCount] = useState(5);
   const barCountOptions = [5, 10, 15];
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+
+  const exportToPDF = async () => {
+    setIsExportingPDF(true);
+    try {
+      const dashboardElement = document.getElementById('dashboard-content');
+      if (!dashboardElement) {
+        alert('Dashboard content not found');
+        return;
+      }
+
+      // Capture the dashboard as canvas
+      const canvas = await html2canvas(dashboardElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#0a0f1e'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('l', 'mm', 'a4'); // landscape orientation
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 10;
+
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      
+      // Add AI analysis on a second page if available
+      if (analysis && analysis.summary) {
+        pdf.addPage();
+        pdf.setFontSize(16);
+        pdf.setTextColor(20, 184, 166); // brand teal
+        pdf.text('AI Policy Brief', 15, 20);
+        
+        pdf.setFontSize(10);
+        pdf.setTextColor(0, 0, 0);
+        const lines = pdf.splitTextToSize(analysis.summary, pdfWidth - 30);
+        pdf.text(lines, 15, 35);
+      }
+
+      pdf.save(`XAM-HEID-Report-${filters.disease}-${filters.year}.pdf`);
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      alert('Failed to export PDF. Please try again.');
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
 
   const getDisparityIndex = (yearData: StateData[]): number => {
     const validData = yearData.filter(d => d.value !== null);
@@ -119,9 +174,33 @@ const Dashboard: React.FC<DashboardProps> = ({ data, fullDataset, filters, stats
                 <div>
                   <h2 className="text-2xl font-bold text-brand-light">Disparity Analysis for {filters.year}</h2>
                 </div>
-                <div className="text-right text-xs text-gray-400">
-                    <p>Showing data for: <span className="font-semibold text-brand-teal">{filters.disease}</span></p>
-                    <p>Filtered by: <span className="font-semibold text-brand-teal">{filters.demographic} {filters.subCategory ? `(${filters.subCategory})` : ''}</span></p>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={exportToPDF}
+                    disabled={isExportingPDF}
+                    className="px-4 py-2 bg-brand-teal text-brand-bg font-semibold rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isExportingPDF ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Exporting...
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export PDF
+                      </>
+                    )}
+                  </button>
+                  <div className="text-right text-xs text-gray-400">
+                      <p>Showing data for: <span className="font-semibold text-brand-teal">{filters.disease}</span></p>
+                      <p>Filtered by: <span className="font-semibold text-brand-teal">{filters.demographic} {filters.subCategory ? `(${filters.subCategory})` : ''}</span></p>
+                  </div>
                 </div>
             </div>
             <div className="grid grid-cols-3 divide-x divide-gray-700 bg-black bg-opacity-20 p-4 rounded-lg">
