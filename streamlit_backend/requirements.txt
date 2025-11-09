@@ -1,2 +1,7 @@
-# ARCHIVED: Streamlit prototype requirements moved to streamlit_archive/requirements.txt
-# Keep other backend packages as needed in your project-level requirements when integrating the Python ML backend.
+fastapi
+uvicorn[standard]
+pandas
+mlxtend
+torch
+transformers
+

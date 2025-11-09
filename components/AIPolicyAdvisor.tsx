@@ -51,7 +51,9 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
         demographics[currentFilters.demographic] = currentFilters.subCategory;
       }
 
-      const response = await fetch('http://127.0.0.1:8000/api/mine_patterns', {
+      // Use environment variable for backend URL, fallback to localhost for development
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
+      const response = await fetch(`${backendUrl}/api/mine_patterns`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
