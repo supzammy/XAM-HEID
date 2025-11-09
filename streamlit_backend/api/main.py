@@ -9,8 +9,12 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from fastapi import FastAPI, Query, HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import math
+import numpy as np
 from typing import Optional, Dict, Any
 import pandas as pd
 
@@ -68,14 +72,47 @@ def health():
 
 @app.post("/filter")
 def filter_endpoint(req: FilterRequest):
-    df = get_data()
     try:
-        filtered = filter_dataset(df, disease=req.disease, year=req.year, demographics=req.demographics)
+        df = get_data()
+        # normalize the disease name to match dataframe column names
+        disease_normalized = normalize_disease_name(req.disease)
+        filtered = filter_dataset(df, disease=disease_normalized, year=req.year, demographics=req.demographics)
+
+        agg = aggregate_by_state(filtered, disease=disease_normalized)
+        agg = apply_rule_of_11(agg)
+        # Convert NaN (numpy) to JSON-friendly None
+        agg_clean = agg.where(pd.notnull(agg), None)
+
+        # Prepare records and sanitize values (replace NaN/inf with None, convert numpy scalars)
+        records = agg_clean.to_dict(orient='records')
+
+        def sanitize_value(v):
+            # convert numpy scalar to native
+            if isinstance(v, (np.integer, np.int64, np.int32)):
+                return int(v)
+            if isinstance(v, (np.floating, np.float64, np.float32)):
+                fv = float(v)
+                return None if not math.isfinite(fv) else fv
+            if isinstance(v, (np.bool_,)):
+                return bool(v)
+            # native floats
+            if isinstance(v, float):
+                return None if not math.isfinite(v) else v
+            return v
+
+        sanitized = []
+        for r in records:
+            newr = {k: sanitize_value(v) for k, v in r.items()}
+            sanitized.append(newr)
+
+        encoded = jsonable_encoder(sanitized)
+        return JSONResponse(content=encoded)
     except ValueError as e:
+        # Expected validation error from filter_dataset mapping/validation
         raise HTTPException(status_code=400, detail=str(e))
-    agg = aggregate_by_state(filtered, disease=req.disease)
-    agg = apply_rule_of_11(agg)
-    return agg.to_dict(orient="records")
+    except Exception as e:
+        # Unexpected error: include the error text in the response for debugging
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/mine_patterns")
 def mine_patterns_endpoint(req: MiningRequest):
