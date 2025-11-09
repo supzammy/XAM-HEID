@@ -1,11 +1,25 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
 # XAM-HEID: Health Equity Intelligence Dashboard
 **A Submission for LaserHack 2025 (HealthTech & AI Themes)**
 
 XAM Health Equity Intelligence Dashboard (XAM HEID) is an AI-powered platform that reveals healthcare disparities via synthetic data modeled on hospital records. It uses machine learning to detect regional and demographic patterns for heart disease, diabetes, and cancer, enabling accessible insights with strict privacy compliance.
+
+# Project Mission
+The goal of this project is to democratize access to healthcare data. We empower policymakers, researchers, and public health officials to identify, understand, and address health inequities in the United States.
+
+By simplifying complex datasets and leveraging AI to highlight significant, often hidden, patterns, this tool aims to drive data-informed decisions that can lead to more equitable health outcomes for all communities.
+
+# Data Source & Privacy
+This dashboard utilizes a synthetically generated dataset designed to mimic the structure and complexity of real-world healthcare information, such as that from the Healthcare Cost and Utilization Project (HCUP). This approach allows for robust development and demonstration without compromising real patient privacy.
+
+A core feature of our methodology is strict adherence to the "Rule of 11". To ensure confidentiality, any data point representing fewer than 11 individuals is suppressed and marked as 'Suppressed' on the map. This is a critical privacy-preserving technique used in public health reporting.
+
+# Core Features & Methodology
+The dashboard quantifies disparities using a Disparity Index, calculated as the percentage difference between the highest and lowest values in the currently filtered dataset. A higher index indicates greater inequality across states.
+
+The AI Policy Advisor is the heart of the platform, powered by ML custom made model but in future, if everything goes as planned - we will just use AI cuz its better. Right now I'm not using AI cuz I don't get the funds to get APIs. anyways, I've checked it myself locally. It performs a real-time analysis of the entire dataset for a selected year to uncover non-obvious correlations, provide an instant summary, identify key patterns, and offer an interactive chat to explore the data further.
+
+Users can export both a high-fidelity visual report of the dashboard and a text-based AI Brief in PDF format, making insights portable and actionable for policy discussions.
+
 
 ## Project Vision & Evolution
 

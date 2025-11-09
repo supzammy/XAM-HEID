@@ -45,16 +45,21 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
       const yearData = fullDataset[currentFilters.year];
       if (!yearData) throw new Error("No data for selected year");
 
-      // Instead of calling an AI, we now call our own backend's ML endpoint.
+      // The backend loads its own data, so we only need to send filters.
+      const demographics: Record<string, string> = {};
+      if (currentFilters.demographic && currentFilters.subCategory) {
+        demographics[currentFilters.demographic] = currentFilters.subCategory;
+      }
+
       const response = await fetch('http://127.0.0.1:8000/api/mine_patterns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          data: yearData,
           disease: currentFilters.disease,
-          // These parameters can be adjusted for more/less strict pattern mining
-          min_support: 0.2, 
-          min_confidence: 0.7
+          year: currentFilters.year,
+          demographics: demographics,
+          min_support: 0.1, 
+          min_confidence: 0.5
         }),
       });
 
