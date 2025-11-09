@@ -44,47 +44,51 @@ def extract_intent(query: str) -> Dict[str, Any]:
 def answer_query(df: pd.DataFrame, query: str, default_year: Optional[int]=None) -> str:
     """Return a human-readable answer to simple disparity queries using the provided dataset.
     The function uses `extract_intent` to route to aggregation functions.
+    This version expects a pre-aggregated and privacy-suppressed DataFrame.
     """
     intent = extract_intent(query)
-    disease = intent.get('disease', 'diabetes')
+    # The disease is now implicit in the aggregated 'cases' and 'rate' columns
     year = intent.get('year', default_year)
+
+    # Filter out suppressed data before answering
+    df_safe = df[df['suppressed'] == False].copy()
+    if df_safe.empty:
+        return "Sorry, there is not enough data to answer this query without violating privacy rules."
 
     if intent.get('intent') == 'top_states' or 'top_states' in intent:
         k = intent.get('k', 5)
-        sub = df.copy()
+        sub = df_safe.copy()
         if year:
             sub = sub[sub['year']==year]
-        grp = sub.groupby('state')[[disease,'patient_id']].agg(cases=(disease,'sum'), population=('patient_id','count'))
-        grp['rate'] = grp['cases'] / grp['population']
-        grp = grp.sort_values('rate', ascending=False)
-        top = grp.head(k)
-        lines = [f"Top {k} states by {disease} rate{(' in '+str(year)) if year else ''}:\n"]
-        for st, row in top.iterrows():
-            lines.append(f"- {st}: {row['cases']} cases / {int(row['population'])} pop -> rate={row['rate']:.3%}")
+        
+        # Data is already aggregated, just sort and select top N
+        top = sub.sort_values('rate', ascending=False).head(k)
+        
+        lines = [f"Top {k} states by disparity rate{(' in '+str(year)) if year else ''}:\n"]
+        for _, row in top.iterrows():
+            lines.append(f"- {row['state']}: {row['cases']:.0f} cases / {row['population']:.0f} pop -> rate={row['rate']:.3%}")
         return '\n'.join(lines)
 
+    # The 'compare' and 'trend' intents are more complex with pre-aggregated data
+    # because the original demographic groups might not be present.
+    # For the MVP, we will return a message indicating this limitation.
     if intent.get('intent') == 'compare':
-        groups = intent.get('compare_groups', ['Low','High'])
-        sub = df.copy()
-        if year:
-            sub = sub[sub['year']==year]
-        lines = [f"Comparing {disease} rates for {groups[0]} vs {groups[1]} in {year or 'all years'}:\n"]
-        for g in groups:
-            grp = sub[sub['income_group']==g]
-            cases = grp[disease].sum()
-            pop = grp.shape[0]
-            rate = cases / pop if pop>0 else 0
-            lines.append(f"- {g}: {int(cases)} cases / {pop} pop -> rate={rate:.3%}")
-        return '\n'.join(lines)
+        return "Sorry, detailed demographic comparisons are not supported in this Q&A version when data is aggregated for privacy."
 
     if intent.get('intent') == 'trend' or 'trend' in query:
-        sub = df.copy()
-        grp = sub.groupby('year')[[disease,'patient_id']].agg(cases=(disease,'sum'), population=('patient_id','count'))
-        grp['rate'] = grp['cases'] / grp['population']
-        lines = [f"Trend for {disease} (yearly):\n"]
-        for y,row in grp.iterrows():
-            lines.append(f"- {y}: {int(row['cases'])} cases / {int(row['population'])} pop -> rate={row['rate']:.3%}")
-        return '\n'.join(lines)
+        # We can show a trend if the aggregation was done by year
+        if 'year' in df_safe.columns:
+            grp = df_safe.groupby('year').agg(
+                cases=('cases', 'sum'),
+                population=('population', 'sum')
+            )
+            grp['rate'] = grp['cases'] / grp['population']
+            lines = [f"Trend for the selected condition (yearly):\n"]
+            for y, row in grp.iterrows():
+                lines.append(f"- {y}: {row['cases']:.0f} cases / {row['population']:.0f} pop -> rate={row['rate']:.3%}")
+            return '\n'.join(lines)
+        else:
+            return "Sorry, trend analysis requires data to be grouped by year, which is not available in the current view."
 
     # Default fallback
-    return "Sorry, I couldn't parse that query precisely. Try asking 'Which states have the highest diabetes rates in 2020?' or 'Compare low vs high income diabetes rates'."
+    return "Sorry, I couldn't parse that query precisely. Try asking 'Which states have the highest rates in 2020?'"

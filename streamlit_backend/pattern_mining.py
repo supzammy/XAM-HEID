@@ -7,54 +7,64 @@ import pandas as pd
 from mlxtend.frequent_patterns import apriori, association_rules
 from typing import List, Tuple, Dict, Any
 
+from streamlit_backend.data_loader import apply_rule_of_11
 
-def make_transactions(df: pd.DataFrame, disease: str, groupby: List[str] = ['state','year','income_group']) -> pd.DataFrame:
+
+def make_transactions(df: pd.DataFrame, disease: str, groupby: List[str] = ['state','year','income_group', 'age_group', 'sex', 'race_ethnicity']) -> pd.DataFrame:
     """Create a one-hot-encoded transaction table where each row corresponds to a grouped cell (e.g., state-year-income)
     and columns include demographic buckets and disease indicators (e.g., 'income=Low', 'age=65+', 'disease=diabetes').
+    This version incorporates the Rule of 11 for privacy.
     """
-    # create labeled categorical columns
     df = df.copy()
-    df['income_label'] = 'income=' + df['income_group'].astype(str)
-    df['age_label'] = 'age=' + df['age_group'].astype(str)
-    df['sex_label'] = 'sex=' + df['sex'].astype(str)
-    df['race_label'] = 'race=' + df['race_ethnicity'].astype(str)
 
-    # For transaction mining, we aggregate by group and derive prevalence flags
-    group_cols = groupby
+    # 1. Aggregate data to get counts for cases and population per group
+    group_cols = [col for col in groupby if col in df.columns]
+    if not group_cols:
+        return pd.DataFrame() # Cannot create transactions without grouping
+
     agg = df.groupby(group_cols).agg(
-        population=('patient_id','count'),
-        cases=(disease,'sum')
+        population=('patient_id', 'count'),
+        cases=(disease, 'sum')
     ).reset_index()
-    # A group is considered to have the disease if prevalence > threshold (e.g., >0)
-    agg['has_disease'] = (agg['cases'] > 0).astype(int)
 
-    # We'll construct transactions at patient-level-like granularity by sampling
-    # from the original records within each group and converting to items. For speed, we'll reduce duplicates.
-    # Simpler: represent each group as a transaction composed of the group's dominant demographic labels.
+    # 2. Apply the Rule of 11 to suppress small counts
+    agg_secure = apply_rule_of_11(agg, case_col='cases', pop_col='population')
 
-    # Determine modal values per group
-    def modal_label(sub, col, prefix):
-        return prefix + '=' + sub[col].mode().iat[0]
+    # 3. Filter out the suppressed groups to ensure privacy
+    safe_groups = agg_secure[agg_secure['suppressed'] == False].copy()
+    if safe_groups.empty:
+        return pd.DataFrame()
 
+    # 4. Create transaction "items" from the safe, aggregated data
+    # Each row in safe_groups is now a transaction.
+    # The items are the demographic values and whether the disease is present.
     items = []
-    grouped = df.groupby(group_cols)
-    for name, sub in grouped:
-        income = modal_label(sub, 'income_group', 'income')
-        age = modal_label(sub, 'age_group', 'age')
-        sex = modal_label(sub, 'sex', 'sex')
-        race = modal_label(sub, 'race_ethnicity', 'race')
-        disease_flag = 'has_' + disease if sub[disease].sum() > 0 else 'no_' + disease
-        itemset = [income, age, sex, race, disease_flag]
-        items.append({'transaction': itemset})
+    for _, row in safe_groups.iterrows():
+        itemset = []
+        # Add demographic characteristics as items
+        for col in group_cols:
+            if col not in ['state', 'year']: # state/year are for grouping, not features
+                 itemset.append(f"{col}={row[col]}")
+        
+        # Add disease presence as an item.
+        # We consider the disease "present" for the group if cases > 0.
+        if row['cases'] > 0:
+            itemset.append(f"has_{disease}")
+        
+        items.append(itemset)
 
-    # Convert to one-hot encoded frame
-    # Build DataFrame with each item as a column
-    all_items = set(it for row in items for it in row['transaction'])
+    # 5. Convert the list of itemsets into a one-hot encoded DataFrame
+    if not items:
+        return pd.DataFrame()
+
+    all_items = sorted(list(set(it for itemset in items for it in itemset)))
+    
     rows = []
-    for row in items:
-        presence = {it: (1 if it in row['transaction'] else 0) for it in all_items}
+    for itemset in items:
+        presence = {item: (1 if item in itemset else 0) for item in all_items}
         rows.append(presence)
-    tx = pd.DataFrame(rows)
+        
+    tx = pd.DataFrame(rows, columns=all_items)
     return tx
 
 

@@ -77,8 +77,15 @@ def filter_endpoint(req: FilterRequest):
 @app.post("/api/mine_patterns")
 def mine_patterns_endpoint(req: MiningRequest):
     df = get_data()
-    filtered = filter_dataset(df, disease=req.disease, year=req.year, demographics=req.demographics)
-    tx = make_transactions(filtered, disease=req.disease)
+    disease_normalized = normalize_disease_name(req.disease)
+    filtered = filter_dataset(df, disease=disease_normalized, year=req.year, demographics=req.demographics)
+    
+    # The make_transactions function now handles the Rule of 11 internally
+    tx = make_transactions(filtered, disease=disease_normalized)
+    
+    if tx.empty:
+        return {"rules": []}
+
     fi, rules = run_apriori(tx, min_support=req.min_support, min_threshold=req.min_confidence)
     summarized = summarize_rules(rules, top_n=10)
     return {"rules": summarized}
@@ -86,6 +93,13 @@ def mine_patterns_endpoint(req: MiningRequest):
 @app.post("/qa")
 def qa_endpoint(req: QARequest):
     df = get_data()
-    filtered = filter_dataset(df, disease=req.disease, year=req.year, demographics=req.demographics)
-    answer = answer_query(filtered, req.query, default_year=req.year)
+    disease_normalized = normalize_disease_name(req.disease)
+    filtered = filter_dataset(df, disease=disease_normalized, year=req.year, demographics=req.demographics)
+    
+    # Aggregate and apply Rule of 11 before answering
+    agg = aggregate_by_state(filtered, disease=disease_normalized)
+    agg_secure = apply_rule_of_11(agg)
+
+    # The answer_query function should be adapted to handle aggregated and suppressed data
+    answer = answer_query(agg_secure, req.query, default_year=req.year)
     return {"answer": answer}
