@@ -102,22 +102,22 @@ function App() {
   );
 
   return (
-    <div className="bg-brand-bg text-brand-light font-sans h-screen flex flex-col">
+    <div className="bg-brand-bg text-brand-light font-sans h-screen flex flex-col overflow-hidden">
       <Header />
       
       {/* Mobile navigation menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-brand-surface border-b border-gray-800 p-4">
+        <div className="md:hidden bg-brand-surface border-b border-gray-800 p-4 flex-shrink-0">
           <nav className="flex flex-col space-y-2">
             <button
               onClick={() => { setActiveView('dashboard'); setIsMobileMenuOpen(false); }}
-              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors text-left ${activeView === 'dashboard' ? 'bg-brand-teal text-brand-bg shadow' : 'text-gray-300 hover:bg-gray-700'}`}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors text-left ${activeView === 'dashboard' ? 'bg-brand-teal text-brand-bg shadow' : 'text-gray-300 hover:bg-gray-700'}`}
             >
               Dashboard
             </button>
             <button
               onClick={() => { setActiveView('about'); setIsMobileMenuOpen(false); }}
-              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors text-left ${activeView === 'about' ? 'bg-brand-teal text-brand-bg shadow' : 'text-gray-300 hover:bg-gray-700'}`}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors text-left ${activeView === 'about' ? 'bg-brand-teal text-brand-bg shadow' : 'text-gray-300 hover:bg-gray-700'}`}
             >
               About
             </button>
@@ -125,8 +125,9 @@ function App() {
         </div>
       )}
       
-      <div className="flex-grow flex flex-col lg:flex-row min-h-0">
-        <div className="lg:block">
+      <div className="flex-grow flex flex-col xl:flex-row min-h-0 overflow-hidden">
+        {/* Sidebar - Collapsible on mobile, fixed on desktop */}
+        <div className="flex-shrink-0 xl:block overflow-y-auto xl:overflow-visible">
           <Sidebar
             selectedDisease={selectedDisease}
             setSelectedDisease={setSelectedDisease}
@@ -138,7 +139,9 @@ function App() {
             setSelectedYear={setSelectedYear}
           />
         </div>
-        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
+        
+        {/* Main content area - Properly scrollable */}
+        <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto overflow-x-hidden min-h-0">
           {activeView === 'dashboard' ? (
             <Dashboard 
               data={filteredData}

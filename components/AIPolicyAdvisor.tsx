@@ -162,14 +162,14 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
 
 
   return (
-    <div className="bg-brand-surface bg-opacity-70 p-4 rounded-lg h-full flex flex-col">
+    <div className="bg-brand-surface bg-opacity-70 p-3 md:p-4 rounded-lg h-full flex flex-col overflow-hidden">
       <div className="flex justify-between items-center mb-3 flex-shrink-0">
-        <h3 className="font-semibold text-brand-teal">ML Pattern Analysis</h3>
+        <h3 className="text-sm md:text-base font-semibold text-brand-teal">ML Pattern Analysis</h3>
       </div>
       
-      <div ref={chatHistoryRef} className="flex-grow space-y-3 overflow-y-auto pr-2 min-h-0">
+      <div ref={chatHistoryRef} className="flex-grow space-y-3 overflow-y-auto pr-1 md:pr-2 min-h-0 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
         {/* Analysis & Patterns Section */}
-        <div className="bg-black bg-opacity-25 p-3 rounded-md mb-3 border border-gray-700 flex-shrink-0">
+        <div className="bg-black bg-opacity-25 p-2.5 md:p-3 rounded-md mb-3 border border-gray-700 flex-shrink-0">
           {isAnalyzing && (
               <div className="flex items-center space-x-2 text-sm text-gray-400">
                   <div className="w-2 h-2 bg-brand-teal rounded-full animate-pulse"></div><span>Analyzing dataset with local ML model...</span>
@@ -199,30 +199,30 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
         </div>
 
         {/* Q&A Section */}
-        <div className="bg-black bg-opacity-25 p-3 rounded-md border border-gray-700 flex-shrink-0">
-          <h4 className="text-sm font-bold text-brand-teal mb-2">Ask a Question</h4>
-          <div className="flex gap-2">
+        <div className="bg-black bg-opacity-25 p-2.5 md:p-3 rounded-md border border-gray-700 flex-shrink-0">
+          <h4 className="text-xs md:text-sm font-bold text-brand-teal mb-2">Ask a Question</h4>
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={questionInput}
               onChange={(e) => setQuestionInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && askQuestion()}
+              onKeyPress={(e) => e.key === 'Enter' && !isAnswering && questionInput.trim() && askQuestion()}
               placeholder="e.g., Which state has the highest rate?"
-              className="flex-1 bg-gray-900 text-white px-3 py-2 rounded-md text-sm border border-gray-600 focus:outline-none focus:border-brand-teal"
+              className="flex-1 bg-gray-900 text-white px-3 py-2.5 md:py-2 rounded-md text-xs md:text-sm border border-gray-600 focus:outline-none focus:border-brand-teal touch-manipulation"
               disabled={isAnswering}
             />
             <button
               onClick={askQuestion}
               disabled={isAnswering || !questionInput.trim()}
-              className="px-4 py-2 bg-brand-teal text-brand-bg font-semibold rounded-md hover:bg-opacity-80 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              className="w-full sm:w-auto px-4 py-2.5 md:py-2 bg-brand-teal text-brand-bg font-semibold rounded-md hover:bg-opacity-80 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm touch-manipulation"
             >
               {isAnswering ? 'Asking...' : 'Ask'}
             </button>
           </div>
           
           {qaAnswer && (
-            <div className="mt-3 p-2 bg-gray-900 bg-opacity-50 rounded-md">
-              <p className="text-sm text-gray-300">{qaAnswer}</p>
+            <div className="mt-3 p-2 md:p-2.5 bg-gray-900 bg-opacity-50 rounded-md">
+              <p className="text-xs md:text-sm text-gray-300 break-words">{qaAnswer}</p>
             </div>
           )}
         </div>

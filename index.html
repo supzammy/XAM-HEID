@@ -3,7 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="theme-color" content="#040D11" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>XAM HEID</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -39,6 +42,42 @@
         }
       }
     </script>
+    <style>
+      /* Optimize for mobile touch interactions */
+      * {
+        -webkit-tap-highlight-color: rgba(0, 245, 212, 0.1);
+      }
+      
+      /* Custom scrollbar styling */
+      .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      
+      .scrollbar-thin::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      
+      .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: rgba(75, 85, 99, 0.5);
+        border-radius: 3px;
+      }
+      
+      .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: rgba(75, 85, 99, 0.8);
+      }
+      
+      /* Prevent text selection on UI elements */
+      button, .cursor-pointer {
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      
+      /* Smooth scrolling */
+      html {
+        scroll-behavior: smooth;
+      }
+    </style>
   </head>
   <body class="bg-brand-bg">
     <div id="root"></div>

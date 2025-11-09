@@ -166,50 +166,52 @@ const Dashboard: React.FC<DashboardProps> = ({ data, fullDataset, filters, stats
 
   return (
     <div className="h-full">
-      <div id="dashboard-content" className="flex flex-col lg:flex-row gap-6 h-full">
+      {/* Export button - positioned at top left */}
+      <div className="mb-4 flex justify-start">
+        <button
+          onClick={exportToPDF}
+          disabled={isExportingPDF}
+          className="px-4 py-2 bg-brand-teal text-brand-bg font-semibold rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg"
+        >
+          {isExportingPDF ? (
+            <>
+              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Exporting...
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Export PDF
+            </>
+          )}
+        </button>
+      </div>
+
+      <div id="dashboard-content" className="flex flex-col xl:flex-row gap-4 md:gap-6 h-full">
         {/* Main Content: Map and Stats */}
-        <div className="w-full lg:w-2/3 flex flex-col gap-6">
-          <div className="bg-brand-surface p-4 rounded-lg flex-shrink-0">
-            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-2 gap-3">
-                <div>
-                  <h2 className="text-xl lg:text-2xl font-bold text-brand-light">Disparity Analysis for {filters.year}</h2>
-                </div>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                  <button
-                    onClick={exportToPDF}
-                    disabled={isExportingPDF}
-                    className="w-full sm:w-auto px-4 py-2 bg-brand-teal text-brand-bg font-semibold rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
-                  >
-                    {isExportingPDF ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Exporting...
-                      </>
-                    ) : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Export PDF
-                      </>
-                    )}
-                  </button>
-                  <div className="text-left text-xs text-gray-400">
-                      <p>Showing data for: <span className="font-semibold text-brand-teal">{filters.disease}</span></p>
-                      <p>Filtered by: <span className="font-semibold text-brand-teal">{filters.demographic} {filters.subCategory ? `(${filters.subCategory})` : ''}</span></p>
-                  </div>
-                </div>
+        <div className="w-full xl:w-2/3 flex flex-col gap-4 md:gap-6">
+          <div className="bg-brand-surface p-3 md:p-4 rounded-lg flex-shrink-0">
+            <div className="mb-3">
+              <h2 className="text-lg md:text-2xl font-bold text-brand-light mb-2">Disparity Analysis for {filters.year}</h2>
+              <div className="text-xs text-gray-400 space-y-1">
+                <p>Disease: <span className="font-semibold text-brand-teal">{filters.disease}</span></p>
+                <p>Demographic: <span className="font-semibold text-brand-teal">{filters.demographic} {filters.subCategory ? `(${filters.subCategory})` : ''}</span></p>
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-700 bg-black bg-opacity-20 p-4 rounded-lg gap-4 sm:gap-0">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-0 sm:divide-x divide-gray-700 bg-black bg-opacity-20 p-3 md:p-4 rounded-lg">
               <StatDisplay title="Disparity Index" value={stats.disparityIndex} trend={stats.trend} />
-              <div className="sm:px-4 pt-4 sm:pt-0"><StatDisplay title="Highest Disparity" value={stats.highest} /></div>
-              <div className="sm:pl-4 pt-4 sm:pt-0"><StatDisplay title="Lowest Disparity" value={stats.lowest} /></div>
+              <div className="sm:px-4"><StatDisplay title="Highest Disparity" value={stats.highest} /></div>
+              <div className="sm:px-4"><StatDisplay title="Lowest Disparity" value={stats.lowest} /></div>
             </div>
           </div>
-          <div className="flex-grow bg-brand-surface rounded-lg p-2 min-h-0 h-64 lg:h-auto">
+          
+          {/* Map container with proper aspect ratio and responsive height */}
+          <div className="bg-brand-surface rounded-lg p-3 md:p-4 min-h-0 flex-shrink-0 h-64 sm:h-80 lg:h-96 xl:flex-grow">
             <MapChart 
               data={data} 
               hoveredState={hoveredState} 
@@ -220,24 +222,25 @@ const Dashboard: React.FC<DashboardProps> = ({ data, fullDataset, filters, stats
           </div>
         </div>
 
-        {/* Side Panel: Analysis */}
-        <div className="w-full lg:w-1/3 flex flex-col gap-6">
-          <div className="h-64 lg:h-1/3 bg-brand-surface rounded-lg p-4 flex flex-col min-h-0">
-            <div className="flex justify-between items-center mb-2 flex-shrink-0">
-                <h3 className="font-semibold text-brand-teal">Top {topNCount} States by Disparity</h3>
+        {/* Side Panel: Analysis - Properly stacked on mobile */}
+        <div className="w-full xl:w-1/3 flex flex-col gap-4 md:gap-6">
+          {/* Bar Chart Section */}
+          <div className="bg-brand-surface rounded-lg p-3 md:p-4 flex flex-col min-h-0 flex-shrink-0 h-72 sm:h-80 xl:h-1/3">
+            <div className="flex justify-between items-center mb-3 flex-shrink-0">
+                <h3 className="text-sm md:text-base font-semibold text-brand-teal">Top {topNCount} States by Disparity</h3>
                 <div className="flex space-x-1 p-0.5 bg-gray-900 rounded-md">
                     {barCountOptions.map(count => (
                         <button
                             key={count}
                             onClick={() => setTopNCount(count)}
-                            className={`text-xs px-2 py-0.5 rounded transition-colors duration-200 ${topNCount === count ? 'bg-brand-teal text-brand-bg font-bold shadow' : 'bg-transparent text-gray-400 hover:bg-gray-700'}`}
+                            className={`text-xs px-2 py-1 rounded transition-colors duration-200 ${topNCount === count ? 'bg-brand-teal text-brand-bg font-bold shadow' : 'bg-transparent text-gray-400 hover:bg-gray-700'}`}
                         >
                             {count}
                         </button>
                     ))}
                 </div>
             </div>
-            <div className="flex-grow min-h-0">
+            <div className="flex-grow min-h-0 overflow-hidden">
               <BarChart 
                 data={data} 
                 numberOfBars={topNCount} 
@@ -248,7 +251,9 @@ const Dashboard: React.FC<DashboardProps> = ({ data, fullDataset, filters, stats
               />
             </div>
           </div>
-          <div className="h-96 lg:h-2/3 flex flex-col min-h-0">
+          
+          {/* AI Policy Advisor Section */}
+          <div className="bg-brand-surface rounded-lg flex-shrink-0 h-96 sm:h-[32rem] xl:flex-grow xl:h-auto min-h-0">
               <AIPolicyAdvisor 
                 fullDataset={fullDataset} 
                 filters={filters}
