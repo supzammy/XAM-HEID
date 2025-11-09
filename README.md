@@ -1,6 +1,8 @@
 # XAM-HEID: Health Equity Intelligence Dashboard
 **A Submission for LaserHack 2025 (HealthTech & AI Themes)**
 
+<img width="1438" height="761" alt="Screenshot 2025-11-10 at 3 05 31 AM" src="https://github.com/user-attachments/assets/0b24f05e-0491-4ded-96bd-50bcab3b58ff" />
+
 XAM Health Equity Intelligence Dashboard (XAM HEID) is an AI-powered platform that reveals healthcare disparities via synthetic data modeled on hospital records. It uses machine learning to detect regional and demographic patterns for heart disease, diabetes, and cancer, enabling accessible insights with strict privacy compliance.
 
 # Project Mission
@@ -41,6 +43,31 @@ However, as the project evolved, we went beyond these original expectations. Ins
 | **Frontend**  | `React`, `TypeScript`, `Vite`, `Tailwind CSS`, `Chart.js`, `react-simple-maps` |
 | **Backend**   | `Python`, `FastAPI`, `Pandas`, `scikit-learn`, `mlxtend`                    |
 | **Deployment**| `Vercel` (Frontend), `Docker` (Backend)                                   |
+
+
+# Screenshots:
+
+**Dashboard**
+
+<img width="1433" height="752" alt="Screenshot 2025-11-09 at 7 02 06 AM" src="https://github.com/user-attachments/assets/e0eb5c2a-f870-4454-8eff-f4343950ae0a" />
+
+**About Section**
+
+<img width="1437" height="748" alt="Screenshot 2025-11-10 at 3 07 33 AM" src="https://github.com/user-attachments/assets/b70adb23-470f-4531-a30b-971e558fa187" />
+<img width="1435" height="423" alt="Screenshot 2025-11-10 at 3 07 43 AM" src="https://github.com/user-attachments/assets/bf22a461-d55b-4920-aaf6-5e6f3349ccf8" />
+
+
+**Features**
+
+<img width="416" height="151" alt="Screenshot 2025-11-10 at 3 06 22 AM" src="https://github.com/user-attachments/assets/2127e275-e2c2-43c2-be1e-0b9d7b70979f" />
+
+<img width="424" height="247" alt="Screenshot 2025-11-10 at 3 06 15 AM" src="https://github.com/user-attachments/assets/fbb62994-85b8-42c4-bdb1-809cd8ed5782" />
+
+**More Screenshots**
+
+<img width="1219" height="708" alt="Screenshot 2025-11-10 at 3 05 42 AM" src="https://github.com/user-attachments/assets/894ca7cb-6429-4258-b245-dcc844aaa579" />
+<img width="1438" height="761" alt="Screenshot 2025-11-10 at 3 05 31 AM" src="https://github.com/user-attachments/assets/a845905c-3cfb-4aef-83e6-ec9398720611" />
+<img width="1430" height="750" alt="Screenshot 2025-11-10 at 3 05 08 AM" src="https://github.com/user-attachments/assets/8d28ee5b-bda3-44b5-bf18-805b6b7e8640" />
 
 
 ## Local Development
