@@ -42,7 +42,7 @@ const AboutPage: React.FC = () => {
                         The dashboard quantifies disparities using a <strong className="text-white">Disparity Index</strong>, calculated as the percentage difference between the highest and lowest values in the currently filtered dataset. A higher index indicates greater inequality across states.
                    </p>
                    <p>
-                        The <strong className="text-white">AI Policy Advisor</strong> is the heart of the platform, powered by Google's Gemini API. It performs a real-time analysis of the entire dataset for a selected year to uncover non-obvious correlations, provide an instant summary, identify key patterns, and offer an interactive chat to explore the data further.
+                        The <strong className="text-white">ML Pattern Analysis</strong> is the heart of the platform. It performs a real-time analysis of the dataset for a selected year to uncover non-obvious correlations and identify key patterns in health disparities.
                    </p>
                    <p>
                         Users can export both a high-fidelity <strong className="text-white">visual report</strong> of the dashboard and a text-based <strong className="text-white">AI Brief</strong> in PDF format, making insights portable and actionable for policy discussions.
@@ -52,7 +52,7 @@ const AboutPage: React.FC = () => {
                 <InfoCard title="Technology Stack">
                      <ul className="list-disc list-inside space-y-2">
                         <li><strong className="text-white">Frontend:</strong> Built with React and TypeScript for a robust, modern, and highly interactive user interface.</li>
-                        <li><strong className="text-white">AI Integration:</strong> Utilizes the Google Gemini API for real-time data analysis, pattern discovery, and conversational chat.</li>
+                        <li><strong className="text-white">Backend:</strong> A Python backend powered by FastAPI performs machine learning analysis to discover patterns in the data.</li>
                         <li><strong className="text-white">Visualization:</strong> Employs Chart.js for dynamic bar charts and react-simple-maps for the interactive choropleth map.</li>
                         <li><strong className="text-white">Styling:</strong> Styled with Tailwind CSS for a responsive, clean, and consistent design system.</li>
                         <li><strong className="text-white">PDF Export:</strong> jsPDF and html2canvas are used to generate high-quality, client-side report exports directly in the browser.</li>
@@ -63,8 +63,7 @@ const AboutPage: React.FC = () => {
                      <ul className="list-disc list-inside space-y-2">
                         <li>A user selects a health condition, year, and demographic group from the sidebar filter.</li>
                         <li>They instantly view the updated color-coded US map illustrating disparity levels across states.</li>
-                        <li>They read the AI-generated summary and discovered patterns in the AI Policy Advisor panel.</li>
-                        <li>They use the integrated chat to ask follow-up questions for deeper understanding.</li>
+                        <li>They read the ML-generated summary and discovered patterns in the analysis panel.</li>
                         <li>They export a report or an AI Brief to share observations with colleagues.</li>
                         <li>Finally, they use these actionable insights to inform policy or prioritize resource allocation toward health equity.</li>
                      </ul>

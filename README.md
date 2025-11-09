@@ -1,30 +1,21 @@
-<<<<<<< HEAD
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/drive/1tB_oGdeZxuo-WklqeCqz9yHKDw93l72b
+# XAM-HEID
+XAM Health Equity Intelligence Dashboard (XAM HEID) is an AI-powered platform that reveals healthcare disparities via synthetic data modeled on hospital records. It uses machine learning to detect regional and demographic patterns for heart disease, diabetes, and cancer, enabling accessible insights with strict privacy compliance.
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. If the application requires API keys or other secrets, create a `.env.local` file and add them there.
 3. Run the app:
    `npm run dev`
 
-## Deploying the frontend to Vercel
+## Deploying the Frontend to Vercel
 
 We recommend deploying the React/Vite frontend to Vercel as a static site. The repository includes a `vercel.json` that tells Vercel to build the project using the `dist` output produced by `vite build`.
 
-Steps:
+**Steps:**
 
 1. Commit and push your branch to GitHub.
 2. Go to https://vercel.com and import your GitHub repository (New Project -> Import Git Repository).
@@ -32,12 +23,7 @@ Steps:
 4. Set any environment variables required by your app (for example, an API URL) in the Vercel project settings under "Environment Variables".
 5. Deploy. The site will be available on a vercel.app URL.
 
-Notes about the ML backend
+## Notes about the ML Backend
 
-- Vercel is ideal for serving the frontend. For the Python ML backend (pattern mining / QA), we recommend a separate hosting option (Cloud Run, Render, Railway, or a container on any provider) because the model workloads may require long-running processes and Python runtime support.
-- If you want to host lightweight Python endpoints on Vercel, it's possible with Vercel Serverless Functions (Python) but has limitations. I can scaffold a FastAPI service and Dockerfile and show you how to deploy to Render or Cloud Run.
-
-=======
-# XAM-HEID
-XAM Health Equity Intelligence Dashboard (XAM HEID) is an AI-powered platform that reveals healthcare disparities via synthetic data modeled on hospital records. It uses machine learning to detect regional and demographic patterns for heart disease, diabetes, and cancer, enabling accessible insights with strict privacy compliance.
->>>>>>> 4313b3504cc642b92ce9214d75fd970375aeca58
+- Vercel is ideal for serving the frontend. For the Python ML backend (pattern mining / QA), we recommend a separate hosting option (like Google Cloud Run, Render, or Railway) because the model workloads may require long-running processes and specific Python runtime support.
+- The backend is a FastAPI service, and a `Dockerfile` is included for easy containerization and deployment.
