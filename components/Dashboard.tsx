@@ -166,19 +166,19 @@ const Dashboard: React.FC<DashboardProps> = ({ data, fullDataset, filters, stats
 
   return (
     <div className="h-full">
-      <div id="dashboard-content" className="flex gap-6 h-full">
+      <div id="dashboard-content" className="flex flex-col lg:flex-row gap-6 h-full">
         {/* Main Content: Map and Stats */}
-        <div className="w-2/3 flex flex-col gap-6">
+        <div className="w-full lg:w-2/3 flex flex-col gap-6">
           <div className="bg-brand-surface p-4 rounded-lg flex-shrink-0">
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-2 gap-3">
                 <div>
-                  <h2 className="text-2xl font-bold text-brand-light">Disparity Analysis for {filters.year}</h2>
+                  <h2 className="text-xl lg:text-2xl font-bold text-brand-light">Disparity Analysis for {filters.year}</h2>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <button
                     onClick={exportToPDF}
                     disabled={isExportingPDF}
-                    className="px-4 py-2 bg-brand-teal text-brand-bg font-semibold rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="w-full sm:w-auto px-4 py-2 bg-brand-teal text-brand-bg font-semibold rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
                   >
                     {isExportingPDF ? (
                       <>
@@ -197,19 +197,19 @@ const Dashboard: React.FC<DashboardProps> = ({ data, fullDataset, filters, stats
                       </>
                     )}
                   </button>
-                  <div className="text-right text-xs text-gray-400">
+                  <div className="text-left text-xs text-gray-400">
                       <p>Showing data for: <span className="font-semibold text-brand-teal">{filters.disease}</span></p>
                       <p>Filtered by: <span className="font-semibold text-brand-teal">{filters.demographic} {filters.subCategory ? `(${filters.subCategory})` : ''}</span></p>
                   </div>
                 </div>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-gray-700 bg-black bg-opacity-20 p-4 rounded-lg">
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-700 bg-black bg-opacity-20 p-4 rounded-lg gap-4 sm:gap-0">
               <StatDisplay title="Disparity Index" value={stats.disparityIndex} trend={stats.trend} />
-              <div className="px-4"><StatDisplay title="Highest Disparity" value={stats.highest} /></div>
-              <div className="pl-4"><StatDisplay title="Lowest Disparity" value={stats.lowest} /></div>
+              <div className="sm:px-4 pt-4 sm:pt-0"><StatDisplay title="Highest Disparity" value={stats.highest} /></div>
+              <div className="sm:pl-4 pt-4 sm:pt-0"><StatDisplay title="Lowest Disparity" value={stats.lowest} /></div>
             </div>
           </div>
-          <div className="flex-grow bg-brand-surface rounded-lg p-2 min-h-0">
+          <div className="flex-grow bg-brand-surface rounded-lg p-2 min-h-0 h-64 lg:h-auto">
             <MapChart 
               data={data} 
               hoveredState={hoveredState} 
@@ -221,8 +221,8 @@ const Dashboard: React.FC<DashboardProps> = ({ data, fullDataset, filters, stats
         </div>
 
         {/* Side Panel: Analysis */}
-        <div className="w-1/3 flex flex-col gap-6">
-          <div className="h-1/3 bg-brand-surface rounded-lg p-4 flex flex-col min-h-0">
+        <div className="w-full lg:w-1/3 flex flex-col gap-6">
+          <div className="h-64 lg:h-1/3 bg-brand-surface rounded-lg p-4 flex flex-col min-h-0">
             <div className="flex justify-between items-center mb-2 flex-shrink-0">
                 <h3 className="font-semibold text-brand-teal">Top {topNCount} States by Disparity</h3>
                 <div className="flex space-x-1 p-0.5 bg-gray-900 rounded-md">
@@ -248,7 +248,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, fullDataset, filters, stats
               />
             </div>
           </div>
-          <div className="h-2/3 flex flex-col min-h-0">
+          <div className="h-96 lg:h-2/3 flex flex-col min-h-0">
               <AIPolicyAdvisor 
                 fullDataset={fullDataset} 
                 filters={filters}
