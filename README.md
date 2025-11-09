@@ -1,29 +1,80 @@
-# XAM-HEID
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
+
+# XAM-HEID: Health Equity Intelligence Dashboard
+**A Submission for LaserHack 2025 (HealthTech & AI Themes)**
+
 XAM Health Equity Intelligence Dashboard (XAM HEID) is an AI-powered platform that reveals healthcare disparities via synthetic data modeled on hospital records. It uses machine learning to detect regional and demographic patterns for heart disease, diabetes, and cancer, enabling accessible insights with strict privacy compliance.
 
-## Run Locally
+## Project Vision & Evolution
 
-**Prerequisites:** Node.js
+At the outset, our goal was to develop a health equity dashboard that leverages AI and machine learning to identify and visualize healthcare disparities. We envisioned an intuitive, interactive tool that could help policymakers and researchers uncover actionable insights from complex healthcare data.
 
-1. Install dependencies:
-   `npm install`
-2. If the application requires API keys or other secrets, create a `.env.local` file and add them there.
-3. Run the app:
-   `npm run dev`
+However, as the project evolved, we went beyond these original expectations. Instead of relying on a generic third-party AI, we developed a **custom machine learning pipeline** designed specifically for health equity analysis. This project now stands as a robust, privacy-first, and scalable platform with extensible ML components and a well-structured backend.
 
-## Deploying the Frontend to Vercel
+## Key Features & Innovations
 
-We recommend deploying the React/Vite frontend to Vercel as a static site. The repository includes a `vercel.json` that tells Vercel to build the project using the `dist` output produced by `vite build`.
+- **Custom ML Pipeline:** The backend uses an association rule mining model (`mlxtend`) to automatically uncover meaningful disparity patterns from the data, providing deeper insights than simple data visualization.
+- **Synthetic & Privacy-First Data:** The system operates on synthetic data designed to replicate real-world healthcare records. It strictly adheres to the **"Rule of 11,"** suppressing any data point representing fewer than 11 individuals to guarantee confidentiality.
+- **Interactive Frontend:** A dynamic and responsive interface built with React and TypeScript allows users to filter data by condition, year, and demographic group, with immediate updates to maps and charts.
+- **Decoupled & Scalable Architecture:** The frontend is a standalone static application, communicating with a powerful FastAPI backend that handles all data processing and machine learning workloads. The backend is containerized with Docker for easy deployment.
 
-**Steps:**
+## Technology Stack
 
-1. Commit and push your branch to GitHub.
-2. Go to https://vercel.com and import your GitHub repository (New Project -> Import Git Repository).
-3. Vercel will detect the project. Ensure the Build Command is `npm run build` and the Output Directory is `dist`.
-4. Set any environment variables required by your app (for example, an API URL) in the Vercel project settings under "Environment Variables".
-5. Deploy. The site will be available on a vercel.app URL.
+| Area      | Technologies                                                              |
+| :-------- | :------------------------------------------------------------------------ |
+| **Frontend**  | `React`, `TypeScript`, `Vite`, `Tailwind CSS`, `Chart.js`, `react-simple-maps` |
+| **Backend**   | `Python`, `FastAPI`, `Pandas`, `scikit-learn`, `mlxtend`                    |
+| **Deployment**| `Vercel` (Frontend), `Docker` (Backend)                                   |
 
-## Notes about the ML Backend
 
-- Vercel is ideal for serving the frontend. For the Python ML backend (pattern mining / QA), we recommend a separate hosting option (like Google Cloud Run, Render, or Railway) because the model workloads may require long-running processes and specific Python runtime support.
-- The backend is a FastAPI service, and a `Dockerfile` is included for easy containerization and deployment.
+## Local Development
+
+### Prerequisites
+- Node.js and npm
+- Python 3.9+ and pip
+
+### 1. Running the Frontend
+From the project root directory:
+```bash
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
+```
+The frontend will be available at `http://localhost:3000`.
+
+### 2. Running the Backend
+Navigate to the API directory and run the server:
+```bash
+# Go to the backend API directory
+cd streamlit_backend/api
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Run the FastAPI server
+uvicorn main:app --reload
+```
+The backend API will be available at `http://127.0.0.1:8000`.
+
+## Deployment
+
+### Frontend on Vercel
+The frontend is configured for seamless deployment to Vercel.
+1.  Push your code to a GitHub repository.
+2.  Import the repository into Vercel.
+3.  Vercel will automatically detect the Vite configuration. Use the default settings:
+    - **Build Command:** `npm run build`
+    - **Output Directory:** `dist`
+4.  Deploy.
+
+### Backend with Docker
+The backend is containerized for portability and can be deployed to any service that supports Docker containers (e.g., Google Cloud Run, AWS Fargate, Render, Railway).
+```bash
+# From the streamlit_backend/api directory
+docker build -t xam-heid-backend .
+docker run -p 8000:8000 xam-heid-backend
+```
