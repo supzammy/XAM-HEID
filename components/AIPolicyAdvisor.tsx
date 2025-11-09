@@ -54,8 +54,15 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
         demographics[currentFilters.demographic] = currentFilters.subCategory;
       }
 
-      // Use environment variable for backend URL, fallback to localhost for development
-      const backendUrl = 'http://127.0.0.1:8000';
+      // Resolve backend URL dynamically so mobile devices on the same network can reach the backend
+      const backendUrl = ((): string => {
+        if (typeof window !== 'undefined' && window.location.hostname) {
+          const host = window.location.hostname;
+          const proto = window.location.protocol;
+          return `${proto}//${host}:8000`;
+        }
+        return 'http://127.0.0.1:8000';
+      })();
       
       console.log('Calling backend:', `${backendUrl}/api/mine_patterns`);
       console.log('Filters:', { disease: currentFilters.disease, year: currentFilters.year, demographics });
@@ -120,7 +127,14 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
     setQaAnswer(null);
     
     try {
-      const backendUrl = 'http://127.0.0.1:8000';
+      const backendUrl = ((): string => {
+        if (typeof window !== 'undefined' && window.location.hostname) {
+          const host = window.location.hostname;
+          const proto = window.location.protocol;
+          return `${proto}//${host}:8000`;
+        }
+        return 'http://127.0.0.1:8000';
+      })();
       const demographics: Record<string, string> = {};
       if (filters.demographic && filters.subCategory) {
         demographics[filters.demographic] = filters.subCategory;
@@ -156,8 +170,13 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
   };
 
   useEffect(() => {
+    // Debounce calls when filters change to avoid rapid repeated network requests
     latestFilters.current = filters;
-    fetchInsights(filters);
+    const handle = setTimeout(() => {
+      fetchInsights(filters);
+    }, 350);
+
+    return () => clearTimeout(handle);
   }, [filters, fetchInsights]);
 
 
