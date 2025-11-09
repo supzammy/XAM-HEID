@@ -53,10 +53,41 @@ def apply_rule_of_11(df: pd.DataFrame, case_col: str = 'cases', pop_col: str = '
     Any cell where cases < 11 or population < 11 will have `suppressed=True` and rate set to NaN.
     """
     df = df.copy()
-    df['suppressed'] = ((df[case_col] < 11) | (df[pop_col] < 11))
-    df.loc[df['suppressed'], 'rate'] = np.nan
+
+    # If empty, return a minimal-sane DataFrame shape
+    if df.empty:
+        # Ensure expected columns exist so callers can rely on them
+        df = df.copy()
+        if 'rate' not in df.columns:
+            df['rate'] = np.nan
+        df['suppressed'] = pd.Series(dtype=bool)
+        if case_col not in df.columns:
+            df[case_col] = pd.Series(dtype=float)
+        if pop_col not in df.columns:
+            df[pop_col] = pd.Series(dtype=float)
+        return df
+
+    # Reset index to avoid assignment errors on exotic indices
+    df = df.reset_index(drop=True)
+
+    # Ensure case/pop columns exist (fallback to zeros if missing)
+    for c in (case_col, pop_col):
+        if c not in df.columns:
+            df[c] = 0
+
+    # Compute suppression mask safely
+    mask = (df[case_col] < 11) | (df[pop_col] < 11)
+    # Fill NA in mask with False
+    mask = mask.fillna(False)
+    df['suppressed'] = mask
+
+    # Use the mask to assign NaN where suppressed
+    if 'rate' not in df.columns:
+        df['rate'] = np.nan
+
+    df.loc[mask, 'rate'] = np.nan
     # Optionally mask cases/pop for display
-    df.loc[df['suppressed'], case_col] = np.nan
+    df.loc[mask, case_col] = np.nan
     return df
 
 
