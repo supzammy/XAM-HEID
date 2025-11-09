@@ -42,43 +42,19 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
     setAnalysis(null);
 
     try {
-      const yearData = fullDataset[currentFilters.year];
-      if (!yearData) throw new Error("No data for selected year");
+      // Temporary: Skip backend call for Vercel deployment
+      // Show a placeholder message instead
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading
 
-      // The backend loads its own data, so we only need to send filters.
-      const demographics: Record<string, string> = {};
-      if (currentFilters.demographic && currentFilters.subCategory) {
-        demographics[currentFilters.demographic] = currentFilters.subCategory;
-      }
-
-      // Use environment variable for backend URL, fallback to localhost for development
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
-      const response = await fetch(`${backendUrl}/api/mine_patterns`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          disease: currentFilters.disease,
-          year: currentFilters.year,
-          demographics: demographics,
-          min_support: 0.1, 
-          min_confidence: 0.5
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Backend error: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      
-      // Transform the backend's association rules into the format the UI expects.
       const transformedAnalysis: AnalysisResponse = {
-        summary: `Found ${result.rules.length} potential correlation patterns for **${currentFilters.disease}** in **${currentFilters.year}**. These patterns highlight relationships between different demographic factors.`,
-        patterns: result.rules.map((rule: any) => ({
-          title: `Pattern: ${rule.antecedents.join(', ')} → ${rule.consequents.join(', ')}`,
-          description: `When we see high rates in '${rule.antecedents.join(' & ')}', there's a ${Math.round(rule.confidence * 100)}% chance of also seeing high rates in '${rule.consequents.join(' & ')}'. This pattern appeared in ${Math.round(rule.support * 100)}% of the analyzed areas.`,
-        })),
-        questions: [], // AI-generated questions are removed.
+        summary: `ML Pattern Analysis for **${currentFilters.disease}** in **${currentFilters.year}** is currently being prepared. The advanced pattern mining backend will be deployed soon to provide deep insights into health equity disparities across demographics.`,
+        patterns: [
+          {
+            title: "Backend Deployment In Progress",
+            description: "The ML-powered association rule mining engine is being deployed. Once live, it will analyze demographic patterns and correlations to identify actionable insights for reducing health disparities."
+          }
+        ],
+        questions: [],
       };
 
       if (latestFilters.current === currentFilters) {
@@ -86,12 +62,16 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
       }
 
     } catch (error) {
-      console.error("Error fetching patterns from backend:", error);
-       if (latestFilters.current === currentFilters) {
-        setAnalysis({ summary: "Sorry, I couldn't connect to the backend ML service. Please ensure the backend is running and try again.", patterns: [], questions: [] });
+      console.error("Error:", error);
+      if (latestFilters.current === currentFilters) {
+        setAnalysis({ 
+          summary: "ML Pattern Analysis will be available soon. The dashboard's interactive map and charts are fully functional.", 
+          patterns: [], 
+          questions: [] 
+        });
       }
     } finally {
-       if (latestFilters.current === currentFilters) {
+      if (latestFilters.current === currentFilters) {
         setIsAnalyzing(false);
       }
     }
