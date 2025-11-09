@@ -1,0 +1,9 @@
+# Archived requirements for the Streamlit prototype
+pandas>=1.5
+numpy>=1.23
+scikit-learn>=1.2
+mlxtend>=0.22
+streamlit>=1.22
+plotly>=5.15
+altair>=5.2
+# transformers and torch were optional

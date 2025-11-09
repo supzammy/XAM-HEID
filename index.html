@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XAM HEID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-bg': '#040D11',
+              'brand-surface': '#081C22',
+              'brand-teal': '#00F5D4',
+              'brand-light': '#E6F1FF',
+              'map-low': '#3b82f6',
+              'map-mid-low': '#93c5fd',
+              'map-neutral': '#f1f5f9',
+              'map-mid-high': '#f87171',
+              'map-high': '#b91c1c',
+            },
+            animation: {
+              'pop-in': 'pop-in 0.2s ease-out forwards',
+              'slide-up-fade': 'slide-up-fade 0.3s ease-out forwards',
+            },
+            keyframes: {
+              'pop-in': {
+                '0%': { opacity: '0', transform: 'scale(0.9)' },
+                '100%': { opacity: '1', transform: 'scale(1)' },
+              },
+              'slide-up-fade': {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^18.0.0/",
+    "react/": "https://aistudiocdn.com/react@^18.0.0/",
+    "react": "https://aistudiocdn.com/react@^18.0.0",
+    "d3-scale": "https://aistudiocdn.com/d3-scale@^4.0.2",
+    "react-simple-maps": "https://aistudiocdn.com/react-simple-maps@^3.0.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0",
+    "jspdf": "https://aistudiocdn.com/jspdf@^2.5.1",
+    "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1",
+    "chart.js": "https://aistudiocdn.com/chart.js@^4.4.3",
+    "chart.js/": "https://aistudiocdn.com/chart.js@^4.5.1/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-brand-bg">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
