@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <div align="center">
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
@@ -36,3 +37,7 @@ Notes about the ML backend
 - Vercel is ideal for serving the frontend. For the Python ML backend (pattern mining / QA), we recommend a separate hosting option (Cloud Run, Render, Railway, or a container on any provider) because the model workloads may require long-running processes and Python runtime support.
 - If you want to host lightweight Python endpoints on Vercel, it's possible with Vercel Serverless Functions (Python) but has limitations. I can scaffold a FastAPI service and Dockerfile and show you how to deploy to Render or Cloud Run.
 
+=======
+# XAM-HEID
+XAM Health Equity Intelligence Dashboard (XAM HEID) is an AI-powered platform that reveals healthcare disparities via synthetic data modeled on hospital records. It uses machine learning to detect regional and demographic patterns for heart disease, diabetes, and cancer, enabling accessible insights with strict privacy compliance.
+>>>>>>> 4313b3504cc642b92ce9214d75fd970375aeca58
