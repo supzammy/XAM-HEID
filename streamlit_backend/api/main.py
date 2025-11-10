@@ -49,18 +49,14 @@ app = FastAPI(
 allowed_origins_env = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:5173')
 origins = [origin.strip() for origin in allowed_origins_env.split(',')]
 
-# Add wildcard for Vercel preview deployments (optional, use with caution)
-if os.getenv('ALLOW_VERCEL_PREVIEWS', 'false').lower() == 'true':
-    origins.append("https://*.vercel.app")
-
+# Add Vercel domain pattern support (allows *.vercel.app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Allow all Vercel deployments
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 DATA_PATH = Path(__file__).parent.parent / 'data' / 'synthetic_health.csv'

@@ -222,6 +222,36 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
       </div>
       
       <div ref={chatHistoryRef} className="flex-grow space-y-3 overflow-y-auto pr-1 md:pr-2 min-h-0 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+        {/* Q&A Section - Moved to Top */}
+        <div className="bg-black bg-opacity-25 p-2.5 md:p-3 rounded-md border border-gray-700 flex-shrink-0">
+          <h4 className="text-lg md:text-xl font-bold text-brand-teal mb-1">Ask a Question</h4>
+          <p className="text-xs text-gray-400 mb-3">Ask me anything</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={questionInput}
+              onChange={(e) => setQuestionInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && !isAnswering && questionInput.trim() && askQuestion()}
+              placeholder="e.g., Which state has the highest rate?"
+              className="flex-1 bg-gray-900 text-white px-3 py-2.5 md:py-2 rounded-md text-xs md:text-sm border border-gray-600 focus:outline-none focus:border-brand-teal touch-manipulation"
+              disabled={isAnswering}
+            />
+            <button
+              onClick={askQuestion}
+              disabled={isAnswering || !questionInput.trim()}
+              className="w-full sm:w-auto px-4 py-2.5 md:py-2 bg-brand-teal text-brand-bg font-semibold rounded-md hover:bg-opacity-80 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm touch-manipulation"
+            >
+              {isAnswering ? 'Asking...' : 'Ask'}
+            </button>
+          </div>
+          
+          {qaAnswer && (
+            <div className="mt-3 p-2 md:p-2.5 bg-gray-900 bg-opacity-50 rounded-md">
+              <p className="text-xs md:text-sm text-gray-300 break-words">{qaAnswer}</p>
+            </div>
+          )}
+        </div>
+
         {/* Analysis & Patterns Section */}
         <div className="bg-black bg-opacity-25 p-2.5 md:p-3 rounded-md mb-3 border border-gray-700 flex-shrink-0">
           {isAnalyzing && (
@@ -259,35 +289,6 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
                       </div>
                   )}
               </div>
-          )}
-        </div>
-
-        {/* Q&A Section */}
-        <div className="bg-black bg-opacity-25 p-2.5 md:p-3 rounded-md border border-gray-700 flex-shrink-0">
-          <h4 className="text-xs md:text-sm font-bold text-brand-teal mb-2">Ask a Question</h4>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="text"
-              value={questionInput}
-              onChange={(e) => setQuestionInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && !isAnswering && questionInput.trim() && askQuestion()}
-              placeholder="e.g., Which state has the highest rate?"
-              className="flex-1 bg-gray-900 text-white px-3 py-2.5 md:py-2 rounded-md text-xs md:text-sm border border-gray-600 focus:outline-none focus:border-brand-teal touch-manipulation"
-              disabled={isAnswering}
-            />
-            <button
-              onClick={askQuestion}
-              disabled={isAnswering || !questionInput.trim()}
-              className="w-full sm:w-auto px-4 py-2.5 md:py-2 bg-brand-teal text-brand-bg font-semibold rounded-md hover:bg-opacity-80 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm touch-manipulation"
-            >
-              {isAnswering ? 'Asking...' : 'Ask'}
-            </button>
-          </div>
-          
-          {qaAnswer && (
-            <div className="mt-3 p-2 md:p-2.5 bg-gray-900 bg-opacity-50 rounded-md">
-              <p className="text-xs md:text-sm text-gray-300 break-words">{qaAnswer}</p>
-            </div>
           )}
         </div>
       </div>
