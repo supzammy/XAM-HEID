@@ -1,5 +1,4 @@
 # XAM-HEID: Health Equity Intelligence Dashboard
-**A Submission for LaserHack 2025 (HealthTech & AI Themes)**
 
 <img width="1438" height="761" alt="Screenshot 2025-11-10 at 3 05 31 AM" src="https://github.com/user-attachments/assets/0b24f05e-0491-4ded-96bd-50bcab3b58ff" />
 
