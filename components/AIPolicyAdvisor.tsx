@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { RawStateData, Disease, AnalysisResponse } from '../types';
+import { api, isAIEnabled } from '../services/apiService';
 
 interface AIPolicyAdvisorProps {
   fullDataset: Record<number, RawStateData[]>;
@@ -31,6 +32,7 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
   const [questionInput, setQuestionInput] = useState('');
   const [isAnswering, setIsAnswering] = useState(false);
   const [qaAnswer, setQaAnswer] = useState<string | null>(null);
+  const [hasAnalyzed, setHasAnalyzed] = useState(false);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
   const latestFilters = useRef(filters);
 
@@ -43,74 +45,93 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
   const fetchInsights = useCallback(async (currentFilters: typeof filters) => {
     setIsAnalyzing(true);
     setAnalysis(null);
+    setHasAnalyzed(true);
 
     try {
       const yearData = fullDataset[currentFilters.year];
       if (!yearData) throw new Error("No data for selected year");
 
-      // The backend loads its own data, so we only need to send filters.
+      // Build demographics filter
       const demographics: Record<string, string> = {};
       if (currentFilters.demographic && currentFilters.subCategory) {
         demographics[currentFilters.demographic] = currentFilters.subCategory;
       }
 
-      // Resolve backend URL dynamically so mobile devices on the same network can reach the backend
-      const backendUrl = ((): string => {
-        if (typeof window !== 'undefined' && window.location.hostname) {
-          const host = window.location.hostname;
-          const proto = window.location.protocol;
-          return `${proto}//${host}:8000`;
-        }
-        return 'http://127.0.0.1:8000';
-      })();
-      
-      console.log('Calling backend:', `${backendUrl}/api/mine_patterns`);
-      console.log('Filters:', { disease: currentFilters.disease, year: currentFilters.year, demographics });
-      
-      const response = await fetch(`${backendUrl}/api/mine_patterns`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          disease: currentFilters.disease,
-          year: currentFilters.year,
-          demographics: demographics,
-          min_support: 0.01,  // Lowered from 0.1 to find more patterns
-          min_confidence: 0.3  // Lowered from 0.5 to find more patterns
-        }),
+      console.log('Fetching insights for:', { 
+        disease: currentFilters.disease, 
+        year: currentFilters.year, 
+        demographics,
+        aiEnabled: isAIEnabled()
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Backend error:', response.status, errorText);
-        throw new Error(`Backend error: ${response.statusText}`);
-      }
+      // Use AI insights endpoint if enabled, otherwise use pattern mining
+      const result = isAIEnabled()
+        ? await api.getAIInsights({
+            disease: currentFilters.disease,
+            year: currentFilters.year,
+            demographics,
+          })
+        : await api.minePatterns({
+            disease: currentFilters.disease,
+            year: currentFilters.year,
+            demographics,
+          });
 
-      const result = await response.json();
       console.log('Backend response:', result);
-      
-      // Transform the backend's association rules into the format the UI expects.
-      const transformedAnalysis: AnalysisResponse = {
-        summary: result.rules.length > 0 
-          ? `Found ${result.rules.length} potential correlation patterns for **${currentFilters.disease}** in **${currentFilters.year}**. These patterns highlight relationships between different demographic factors.`
-          : `No significant patterns found for **${currentFilters.disease}** in **${currentFilters.year}** with the current demographic filters. Try adjusting filters or the ML model found insufficient data to generate reliable patterns (Rule of 11 privacy protection may have suppressed small sample sizes).`,
-        patterns: result.rules.map((rule: any) => ({
-          title: `Pattern: ${rule.antecedent.join(', ')} → ${rule.consequent.join(', ')}`,
-          description: `When we see high rates in '${rule.antecedent.join(' & ')}', there's a ${Math.round(rule.confidence * 100)}% chance of also seeing high rates in '${rule.consequent.join(' & ')}'. This pattern appeared in ${Math.round(rule.support * 100)}% of the analyzed areas.`,
-        })),
-        questions: [], // AI-generated questions are removed.
-      };
+
+      // Transform response based on source
+      let transformedAnalysis: AnalysisResponse;
+
+      if (result.source === 'gemini_ai') {
+        // AI-enhanced insights
+        transformedAnalysis = {
+          summary: result.insights || 'AI insights generated successfully.',
+          patterns: (result.ml_patterns || []).map((rule: any) => ({
+            title: `Pattern: ${rule.antecedent?.join(', ') || 'N/A'} → ${rule.consequent?.join(', ') || 'N/A'}`,
+            description: `When we see high rates in '${rule.antecedent?.join(' & ')}', there's a ${Math.round((rule.confidence || 0) * 100)}% chance of also seeing high rates in '${rule.consequent?.join(' & ')}'. This pattern appeared in ${Math.round((rule.support || 0) * 100)}% of the analyzed areas.`,
+          })),
+          questions: [],
+          aiSource: 'Gemini AI',
+        };
+      } else if (result.source === 'ml_only') {
+        // ML-only fallback
+        transformedAnalysis = {
+          summary: result.insights || `Analysis complete for **${currentFilters.disease}** in **${currentFilters.year}**.`,
+          patterns: (result.ml_patterns || []).map((rule: any) => ({
+            title: `Pattern: ${rule.antecedent?.join(', ') || 'N/A'} → ${rule.consequent?.join(', ') || 'N/A'}`,
+            description: `When we see high rates in '${rule.antecedent?.join(' & ')}', there's a ${Math.round((rule.confidence || 0) * 100)}% chance of also seeing high rates in '${rule.consequent?.join(' & ')}'. This pattern appeared in ${Math.round((rule.support || 0) * 100)}% of the analyzed areas.`,
+          })),
+          questions: [],
+          aiSource: 'ML Pattern Mining',
+        };
+      } else {
+        // Legacy pattern mining response
+        const rules = result.rules || [];
+        transformedAnalysis = {
+          summary: rules.length > 0
+            ? `Found ${rules.length} potential correlation patterns for **${currentFilters.disease}** in **${currentFilters.year}**. These patterns highlight relationships between different demographic factors.`
+            : `No significant patterns found for **${currentFilters.disease}** in **${currentFilters.year}** with the current demographic filters. Try adjusting filters or the ML model found insufficient data to generate reliable patterns (Rule of 11 privacy protection may have suppressed small sample sizes).`,
+          patterns: rules.map((rule: any) => ({
+            title: `Pattern: ${rule.antecedent.join(', ')} → ${rule.consequent.join(', ')}`,
+            description: `When we see high rates in '${rule.antecedent.join(' & ')}', there's a ${Math.round(rule.confidence * 100)}% chance of also seeing high rates in '${rule.consequent.join(' & ')}'. This pattern appeared in ${Math.round(rule.support * 100)}% of the analyzed areas.`,
+          })),
+          questions: [],
+          aiSource: 'Association Rule Mining',
+        };
+      }
 
       if (latestFilters.current === currentFilters) {
         setAnalysis(transformedAnalysis);
       }
 
     } catch (error) {
-      console.error("Error fetching patterns from backend:", error);
+      console.error("Error fetching insights from backend:", error);
       if (latestFilters.current === currentFilters) {
-        setAnalysis({ 
-          summary: "Sorry, I couldn't connect to the backend ML service. Please ensure the backend is running at http://localhost:8000 and try again.", 
-          patterns: [], 
-          questions: [] 
+        setAnalysis({
+          summary: `Sorry, couldn't connect to the backend service. ${error instanceof Error ? error.message : 'Please try again.'}`,
+          patterns: [],
+          questions: [],
+          aiSource: 'Error',
         });
       }
     } finally {
@@ -127,14 +148,6 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
     setQaAnswer(null);
     
     try {
-      const backendUrl = ((): string => {
-        if (typeof window !== 'undefined' && window.location.hostname) {
-          const host = window.location.hostname;
-          const proto = window.location.protocol;
-          return `${proto}//${host}:8000`;
-        }
-        return 'http://127.0.0.1:8000';
-      })();
       const demographics: Record<string, string> = {};
       if (filters.demographic && filters.subCategory) {
         demographics[filters.demographic] = filters.subCategory;
@@ -142,48 +155,70 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
 
       console.log('Asking question:', questionInput);
       
-      const response = await fetch(`${backendUrl}/qa`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          disease: filters.disease,
-          year: filters.year,
-          demographics: demographics,
-          query: questionInput
-        }),
+      const result = await api.askQuestion({
+        disease: filters.disease,
+        year: filters.year,
+        demographics,
+        query: questionInput,
       });
 
-      if (!response.ok) {
-        throw new Error(`Backend error: ${response.statusText}`);
-      }
-
-      const result = await response.json();
       console.log('QA response:', result);
       setQaAnswer(result.answer || 'No answer available');
       
     } catch (error) {
       console.error("Error asking question:", error);
-      setQaAnswer("Sorry, I couldn't process your question. Please ensure the backend is running.");
+      setQaAnswer(`Sorry, I couldn't process your question. ${error instanceof Error ? error.message : 'Please try again.'}`);
     } finally {
       setIsAnswering(false);
     }
   };
 
   useEffect(() => {
-    // Debounce calls when filters change to avoid rapid repeated network requests
+    // Reset analyzed state when filters change
+    setHasAnalyzed(false);
     latestFilters.current = filters;
-    const handle = setTimeout(() => {
-      fetchInsights(filters);
-    }, 350);
+  }, [filters]);
 
-    return () => clearTimeout(handle);
-  }, [filters, fetchInsights]);
+  const handleAnalyzeClick = () => {
+    fetchInsights(filters);
+  };
 
 
   return (
     <div className="bg-brand-surface bg-opacity-70 p-3 md:p-4 rounded-lg h-full flex flex-col overflow-hidden">
       <div className="flex justify-between items-center mb-3 flex-shrink-0">
-        <h3 className="text-sm md:text-base font-semibold text-brand-teal">ML Pattern Analysis</h3>
+        <div className="flex-1">
+          <h3 className="text-sm md:text-base font-semibold text-brand-teal">
+            AI Policy Advisor
+            {analysis?.aiSource && (
+              <span className="ml-2 text-xs font-normal text-gray-400">
+                • {analysis.aiSource}
+              </span>
+            )}
+          </h3>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {isAIEnabled() ? 'Powered by Google Gemini AI' : 'ML Pattern Analysis'}
+          </p>
+        </div>
+        <button
+          onClick={handleAnalyzeClick}
+          disabled={isAnalyzing}
+          className="px-4 py-2 bg-brand-teal text-brand-bg font-semibold rounded-md hover:bg-opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm flex items-center gap-2"
+        >
+          {isAnalyzing ? (
+            <>
+              <div className="w-3 h-3 border-2 border-brand-bg border-t-transparent rounded-full animate-spin"></div>
+              Analyzing...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              Analyze
+            </>
+          )}
+        </button>
       </div>
       
       <div ref={chatHistoryRef} className="flex-grow space-y-3 overflow-y-auto pr-1 md:pr-2 min-h-0 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
@@ -191,7 +226,17 @@ const AIPolicyAdvisor: React.FC<AIPolicyAdvisorProps> = ({ fullDataset, filters,
         <div className="bg-black bg-opacity-25 p-2.5 md:p-3 rounded-md mb-3 border border-gray-700 flex-shrink-0">
           {isAnalyzing && (
               <div className="flex items-center space-x-2 text-sm text-gray-400">
-                  <div className="w-2 h-2 bg-brand-teal rounded-full animate-pulse"></div><span>Analyzing dataset with local ML model...</span>
+                  <div className="w-2 h-2 bg-brand-teal rounded-full animate-pulse"></div>
+                  <span>{isAIEnabled() ? 'Analyzing with AI...' : 'Mining patterns...'}</span>
+              </div>
+          )}
+          {!isAnalyzing && !hasAnalyzed && (
+              <div className="text-center py-8">
+                  <svg className="w-16 h-16 mx-auto text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  <p className="text-gray-400 text-sm mb-2">Ready to analyze health equity data</p>
+                  <p className="text-gray-500 text-xs">Select your filters and click <span className="text-brand-teal font-semibold">Analyze</span> to generate AI-powered insights</p>
               </div>
           )}
           {!isAnalyzing && analysis && (

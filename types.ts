@@ -40,6 +40,7 @@ export interface AnalysisResponse {
     summary: string;
     patterns: { title: string; description: string; }[];
     questions: string[];
+    aiSource?: string; // New: indicates the source of analysis (Gemini AI, ML Pattern Mining, etc.)
 }
 
 export interface DashboardStats {

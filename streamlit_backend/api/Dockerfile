@@ -1,13 +1,45 @@
-# FastAPI ML backend Dockerfile
+# FastAPI ML + AI backend Dockerfile
+# Optimized for Google Cloud Run deployment
+
 FROM python:3.11-slim
+
+# Set working directory
 WORKDIR /app
-COPY ../data ../data
-COPY ../data_loader.py ../data_loader.py
-COPY ../pattern_mining.py ../pattern_mining.py
-COPY ../qa.py ../qa.py
-COPY ../utils.py ../utils.py
-COPY api/main.py ./main.py
-COPY api/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-EXPOSE 8000
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy backend modules and data
+COPY ../data /app/data
+COPY ../data_loader.py /app/data_loader.py
+COPY ../pattern_mining.py /app/pattern_mining.py
+COPY ../qa.py /app/qa.py
+COPY ../utils.py /app/utils.py
+
+# Copy API files
+COPY api/main.py /app/main.py
+COPY api/gemini_service.py /app/gemini_service.py
+COPY api/requirements.txt /app/requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Create non-root user for security
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Expose port (Cloud Run will set PORT env variable)
+ENV PORT=8000
+EXPOSE ${PORT}
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:${PORT}/api/health_check')" || exit 1
+
+# Run the application
+# Cloud Run provides PORT env variable, defaulting to 8000 for local
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers 1 --log-level info

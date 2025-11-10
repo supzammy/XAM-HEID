@@ -1,9 +1,15 @@
 """
 FastAPI backend for XAM HEID ML services.
 Exposes endpoints for filtering, mining, and QA using the backend modules.
+Enhanced with Google Gemini AI integration for advanced insights.
 """
 import sys
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Add the project root to the Python path
 sys.path.append(str(Path(__file__).parent.parent.parent))
@@ -18,28 +24,49 @@ import numpy as np
 from typing import Optional, Dict, Any
 import pandas as pd
 
-from streamlit_backend.data_loader import load_data, filter_dataset, aggregate_by_state, apply_rule_of_11
-from streamlit_backend.pattern_mining import make_transactions, run_apriori, summarize_rules
-from streamlit_backend.qa import answer_query
+try:
+    from streamlit_backend.data_loader import load_data, filter_dataset, aggregate_by_state, apply_rule_of_11
+    from streamlit_backend.pattern_mining import make_transactions, run_apriori, summarize_rules
+except ImportError:
+    # Fallback: load local implementations if streamlit_backend not available
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from data_loader import load_data, filter_dataset, aggregate_by_state, apply_rule_of_11
+    from pattern_mining import make_transactions, run_apriori, summarize_rules
 
-app = FastAPI(title="XAM HEID ML Backend")
+try:
+    from streamlit_backend.api.gemini_service import get_gemini_service
+except ImportError:
+    from gemini_service import get_gemini_service
 
-# CORS configuration
-origins = [
-    "http://localhost:3000",
-    "http://localhost:5173", # Vite default port
-]
+app = FastAPI(
+    title="XAM HEID ML & AI Backend",
+    description="Backend API for Health Equity Intelligence Dashboard with Google Gemini AI integration",
+    version="2.0.0"
+)
+
+# Enhanced CORS configuration for Vercel + Cloud Run deployment
+allowed_origins_env = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:5173')
+origins = [origin.strip() for origin in allowed_origins_env.split(',')]
+
+# Add wildcard for Vercel preview deployments (optional, use with caution)
+if os.getenv('ALLOW_VERCEL_PREVIEWS', 'false').lower() == 'true':
+    origins.append("https://*.vercel.app")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
-
 DATA_PATH = Path(__file__).parent.parent / 'data' / 'synthetic_health.csv'
+
+# Initialize Gemini AI service
+gemini_service = get_gemini_service()
 
 def get_data():
     return load_data(str(DATA_PATH))
@@ -146,6 +173,92 @@ def qa_endpoint(req: QARequest):
     agg = aggregate_by_state(filtered, disease=disease_normalized)
     agg_secure = apply_rule_of_11(agg)
 
-    # The answer_query function should be adapted to handle aggregated and suppressed data
-    answer = answer_query(agg_secure, req.query, default_year=req.year)
-    return {"answer": answer}
+    # Enhanced: Use Gemini AI if available, otherwise provide basic response
+    if gemini_service.is_available():
+        answer = gemini_service.answer_health_query(
+            query=req.query,
+            context_data=agg_secure,
+            disease=req.disease,
+            year=req.year
+        )
+    else:
+        # Fallback: Basic response when Gemini not available
+        answer = f"Based on the filtered data for {req.disease} in {req.year}, I found {len(agg_secure)} states with data. {req.query}\n\nNote: Enhanced AI analysis requires Gemini API configuration."
+    
+    return {"answer": answer, "source": "gemini_ai" if gemini_service.is_available() else "ml_only"}
+
+
+@app.post("/api/ai_insights")
+def ai_insights_endpoint(req: MiningRequest):
+    """
+    New endpoint: Generate AI-driven insights using Gemini API.
+    Combines ML pattern mining with Gemini's natural language understanding.
+    Falls back to ML-only analysis if Gemini is unavailable.
+    """
+    df = get_data()
+    disease_normalized = normalize_disease_name(req.disease)
+    
+    try:
+        filtered = filter_dataset(df, disease=disease_normalized, year=req.year, demographics=req.demographics)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    # Run ML pattern mining
+    tx = make_transactions(filtered, disease=disease_normalized)
+    ml_patterns = []
+    
+    if not tx.empty:
+        fi, rules = run_apriori(tx, min_support=req.min_support, min_threshold=req.min_confidence)
+        ml_patterns = summarize_rules(rules, top_n=10)
+    
+    # Generate data summary
+    agg = aggregate_by_state(filtered, disease=disease_normalized)
+    agg_secure = apply_rule_of_11(agg)
+    
+    data_summary = {
+        "total_states": len(agg_secure),
+        "total_cases": int(filtered.shape[0]) if not filtered.empty else 0,
+        "disease": req.disease,
+        "year": req.year,
+    }
+    
+    # Calculate disparity index if we have valid data
+    if not agg_secure.empty and 'rate' in agg_secure.columns:
+        valid_rates = agg_secure['rate'].dropna()
+        if len(valid_rates) > 0:
+            disparity_index = ((valid_rates.max() - valid_rates.min()) / valid_rates.max() * 100)
+            data_summary["disparity_index"] = float(disparity_index)
+            data_summary["max_rate"] = float(valid_rates.max())
+            data_summary["min_rate"] = float(valid_rates.min())
+            data_summary["avg_rate"] = float(valid_rates.mean())
+    
+    # Generate AI insights
+    insights_result = gemini_service.generate_health_insights(
+        data_summary=data_summary,
+        disease=req.disease,
+        year=req.year,
+        ml_patterns=ml_patterns
+    )
+    
+    return insights_result
+
+
+@app.get("/api/health_check")
+def enhanced_health_check():
+    """
+    Enhanced health check endpoint with service status information.
+    """
+    return {
+        "status": "healthy",
+        "version": "2.0.0",
+        "services": {
+            "ml_engine": "active",
+            "gemini_ai": "active" if gemini_service.is_available() else "inactive",
+            "data_loader": "active"
+        },
+        "features": {
+            "pattern_mining": True,
+            "ai_insights": gemini_service.is_available(),
+            "fallback_mode": gemini_service.fallback_enabled
+        }
+    }
