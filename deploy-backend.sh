@@ -65,7 +65,7 @@ echo -e "${GREEN}Step 5: Deploying to Cloud Run${NC}"
 # Prepare environment variables
 ENV_VARS="ENABLE_GEMINI_AI=true"
 ENV_VARS="${ENV_VARS},FALLBACK_TO_ML=true"
-ENV_VARS="${ENV_VARS},GEMINI_MODEL=gemini-pro"
+ENV_VARS="${ENV_VARS},GEMINI_MODEL=gemini-2.5-flash"
 ENV_VARS="${ENV_VARS},LOG_LEVEL=INFO"
 ENV_VARS="${ENV_VARS},PORT=8080"
 
